@@ -1,0 +1,88 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Module evistarpc_util</title>
+<link rel="stylesheet" type="text/css" href="stylesheet.css" title="EDoc">
+</head>
+<body bgcolor="white">
+<div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<hr>
+
+<h1>Module evistarpc_util</h1>
+<ul class="index"><li><a href="#description">Description</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>A collection of utilities to manipulate VistA data structures.
+<p>Copyright © (C) 2010-2011, Wally Cash</p>
+
+<p><b>Authors:</b> Wally Cash (<a href="mailto:wally.cash@gmail.com"><tt>wally.cash@gmail.com</tt></a>).</p>
+
+<h2><a name="description">Description</a></h2>A collection of utilities to manipulate VistA data structures.
+<h2><a name="index">Function Index</a></h2>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#from_fm_datetime-1">from_fm_datetime/1</a></td><td>Converts a fileman datetime string to a datetime tuple.</td></tr>
+<tr><td valign="top"><a href="#piece-2">piece/2</a></td><td>Extracts an element from a '^' delimited list specified
+  by its position.</td></tr>
+<tr><td valign="top"><a href="#piece-3">piece/3</a></td><td>Extracts an element from a delimited list specified
+  by its position and delimiter.</td></tr>
+<tr><td valign="top"><a href="#to_fm_date-1">to_fm_date/1</a></td><td>Converts an Erlang date tuple to fileman format.</td></tr>
+<tr><td valign="top"><a href="#to_fm_datetime-1">to_fm_datetime/1</a></td><td>Converts an Erlang datetime tuple to fileman format.</td></tr>
+<tr><td valign="top"><a href="#to_json-1">to_json/1</a></td><td>Parses a '\r\n' delimited string to JSON using teh default
+  conversion.</td></tr>
+<tr><td valign="top"><a href="#to_json-2">to_json/2</a></td><td>Parses a '\r\n' delimited string to JSON with arguments specifying
+  the conversion.</td></tr>
+<tr><td valign="top"><a href="#to_record-2">to_record/2</a></td><td>Parses a \r\n delimited string to a key value record.</td></tr>
+</table>
+
+<h2><a name="functions">Function Details</a></h2>
+
+<h3 class="function"><a name="from_fm_datetime-1">from_fm_datetime/1</a></h3>
+<div class="spec">
+<p><tt>from_fm_datetime(DateTime) -&gt; any()</tt></p>
+</div><p>Converts a fileman datetime string to a datetime tuple.</p>
+
+<h3 class="function"><a name="piece-2">piece/2</a></h3>
+<div class="spec">
+<p><tt>piece(Str, Pos) -&gt; any()</tt></p>
+</div><p>Extracts an element from a '^' delimited list specified
+  by its position.</p>
+
+<h3 class="function"><a name="piece-3">piece/3</a></h3>
+<div class="spec">
+<p><tt>piece(Str, Pos, Sep) -&gt; any()</tt></p>
+</div><p>Extracts an element from a delimited list specified
+  by its position and delimiter.</p>
+
+<h3 class="function"><a name="to_fm_date-1">to_fm_date/1</a></h3>
+<div class="spec">
+<p><tt>to_fm_date(Date) -&gt; any()</tt></p>
+</div><p>Converts an Erlang date tuple to fileman format.</p>
+
+<h3 class="function"><a name="to_fm_datetime-1">to_fm_datetime/1</a></h3>
+<div class="spec">
+<p><tt>to_fm_datetime(DateTime) -&gt; any()</tt></p>
+</div><p>Converts an Erlang datetime tuple to fileman format.</p>
+
+<h3 class="function"><a name="to_json-1">to_json/1</a></h3>
+<div class="spec">
+<p><tt>to_json(Str) -&gt; any()</tt></p>
+</div><p>Parses a '\r\n' delimited string to JSON using teh default
+  conversion. The array id will be set to "data" and elements will
+  be parsed as 'key'-'value' pairs, with key parsed from the second
+  position and value from the first.</p>
+
+<h3 class="function"><a name="to_json-2">to_json/2</a></h3>
+<div class="spec">
+<p><tt>to_json(Str, X2) -&gt; any()</tt></p>
+</div><p>Parses a '\r\n' delimited string to JSON with arguments specifying
+  the conversion. Arguments are passed as a tuple. The first
+  element of the tuple is a string identifying the array and the second
+  is a list of tuples specifying the element identifier and position.</p>
+
+<h3 class="function"><a name="to_record-2">to_record/2</a></h3>
+<div class="spec">
+<p><tt>to_record(Rec, Str) -&gt; any()</tt></p>
+</div><p>Parses a \r\n delimited string to a key value record. Intended
+  to populate Nitrogen combo/list boxes via the record syntax.</p>
+<hr>
+
+<div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<p><i>Generated by EDoc, May 25 2011, 19:23:02.</i></p>
+</body>
+</html>

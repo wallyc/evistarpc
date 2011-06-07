@@ -28,7 +28,7 @@
 
 -include("evistarpc.hrl").
 
-host() -> get_env(host, "10.9.0.2").
+host() -> get_env(host, "127.0.0.1").
 port() -> get_env(port, 9201).
 
 

@@ -1,5 +1,5 @@
 %% @author Wally Cash <wally.cash@gmail.com>
-%% @copyright (C) 2010-2011, Wally Cash
+%% @copyright (C) 2010-2012, Wally Cash
 %% @doc Supervising process.
 %% @end
 %% 

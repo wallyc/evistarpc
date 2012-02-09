@@ -7,8 +7,8 @@ Erlang Vista RPC Driver Overview
 
 @author Wally Cash <wally.cash@gmail.com>
 
-@copyright 2010-2011 Wally Cash
-@version 0.1.0, {@date} {@time}
+@copyright 2010-2012 Wally Cash
+@version 0.2.0, {@date} {@time}
 
 @doc 
 
@@ -16,7 +16,7 @@ Erlang Vista RPC Driver Overview
 
 The 'evistarpc' application provides an Erlang interface to the <a href="http://worldvista.org" 
 target="_new">Vista</a> RPC broker. Facilities are provided to connect to a Vista RPC broker, 
-authenticate, call a remote procedure, and perform basic conversion of the results into JSON or 
+authenticate, call a remote procedure, and conversion of the results into JSON or 
 key/value records.  
 
 == Example Session ==
@@ -69,8 +69,7 @@ key being parsed from the second position and value from the first.
 ```6> io:format(evistarpc_util:to_json(W)).
    {"data":[{"key":"1","value":"ICU"},{"key":"2","value":"MED/SURG"},{"key":"3","value":"PSYCH"}]}ok'''	
 
-To illustrate a call with arguments we'll get a list of patients. Arguments are passed as a list of strings.
-In this case the first argument is empty:
+To illustrate a call with arguments we'll get a list of patients. Literal arguments are passed as a list of strings, while key/value arguments lists are passed as a list of tuples (i.e. [{"key1","value1"},{"key1","value1"},...]. In this case a literal argument is used with the first argument being empty:
 
 ```7> {_,P}=evistarpc_server:rpc("ORWPT LIST ALL",["","1"]).
    {ok,"3^PATIENTCLINICAL F^^^^PATIENTCLINICAL F\r\n4^PATIENT,CLINICAL M^^^^PATIENT,CLINICAL M\r
@@ -86,6 +85,10 @@ form {identifier,position}. For example:
    {"patients":[{"id":"3","name":"PATIENTCLINICAL F"},{"id":"4","name":"PATIENT,CLINICAL M"},
    {"id":"2","name":"PATIENT,DIETARY"},{"id":"6","name":"PATIENT,LABORATORY"},{"id":"8","name":"PATIENT,PEDIATRIC"},
    {"id":"7","name":"PATIENT,PHARMACY"},{"id":"5","name":"PATIENT,RADIOLOGY"},{"id":"1","name":"ZZTEST,ONE"}]}ok'''
+
+
+
+
 
 
 

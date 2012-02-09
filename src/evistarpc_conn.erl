@@ -1,5 +1,5 @@
 %% @author Wally Cash <wally.cash@gmail.com>
-%% @copyright (C) 2010-2011, Wally Cash
+%% @copyright (C) 2010-2012, Wally Cash
 %% @doc
 %% Provides basic facilities for interfacing with the VistA RPC broker.
 %% @end
@@ -24,18 +24,24 @@
 -export([start/2, connect/2, context/2, disconnect/1, login/3, rpc/2, rpc/3]).
 
 -define(RESPONSE_TIMEOUT, 5000).
--define(PING_INTERVAL, 14000).
--define(VERSION, "1.108").
--define(HEADER, "[XWB]11302\x05").
+-define(PING_INTERVAL, 60000).
+-define(HEADER, "[XWB]1130").
+
+%% Chunk types: Header=1, RPC=2, Security=3, Command=4, Data=5
+%% Broker: Broker = [XWB], Version=1 , RPC Length=3 (i.e. ###)
+%% RPC Types: Command=0, RPC=1 
+%% Return Data: Return=0, No return=1
+%%
+%% Header=Broker + Version + Type + Length + Return
 
 -import(lists, [concat/1,reverse/1]).
 -import(evistarpc_cipher, [encrypt/1]).
-
 
 %%--------------------------------------------------------------------
 %% @doc Start the RPC interface listener.
 %% @end
 %%--------------------------------------------------------------------
+
 start(Host, Port) when is_list(Host), is_integer(Port) -> 
 	Parent=self(),
 	Pid=spawn(fun() -> init(Parent, Host, Port) end),
@@ -57,21 +63,21 @@ init(Parent, Host, Port) ->
 	case gen_tcp:connect(Host, Port, [binary, {packet, 0}]) of
 	{ok, Socket} -> 
 		Parent ! {self(), ok},
-		loop(Socket, Parent, []);
+		loop(Socket, Parent, <<"">>);
 	{error, _} ->
 	    Parent ! {self(), error}
 	end.
 
 %%--------------------------------------------------------------------
-%% @doc Connect to an evistarpc RPC broker.
+%% @doc Connect to the RPC broker.
 %% @end
 %%--------------------------------------------------------------------
-connect(Pid, Str) ->
 
+connect(Pid, Str) ->
 	rpc(Pid, "TCPConnect", Str).
 
 %%--------------------------------------------------------------------
-%% @doc Create a Vista application context.
+%% @doc Create an application context.
 %% @end
 %%--------------------------------------------------------------------
 
@@ -80,7 +86,7 @@ context(Pid, Context) ->
 	rpc(Pid, "XWB CREATE CONTEXT",[X]).
 
 %%--------------------------------------------------------------------
-%% @doc Disconnect from a evistarpc RPC broker.
+%% @doc Disconnect from the RPC broker.
 %% @end
 %%--------------------------------------------------------------------
 
@@ -89,7 +95,7 @@ disconnect(Pid) ->
 	{bye}.
 
 %%--------------------------------------------------------------------
-%% @doc Login to the evistarpc server.
+%% @doc Login to the RPC broker.
 %% @end
 %%--------------------------------------------------------------------
 
@@ -100,63 +106,124 @@ login(Pid, Access, Verify) ->
 	rpc(Pid, "XUS AV CODE",[X]).
 
 %%--------------------------------------------------------------------
-%% @doc Call an RPC without arguments.
+%% @doc RPC call without parameters
 %% @end
 %%--------------------------------------------------------------------
 
 rpc(Pid, Request) ->
 	Header=make_header(Request),
-	R=concat([Header, Request, "54f\x04"]),
-	cmd(Pid, {R}).
+	cmd(Pid, [Header, Request, "54f\x04"]).
 
 %%--------------------------------------------------------------------
-%% @doc Call an RPC with arguments.
+%% @doc RPC call with parameters
 %% @end
 %%--------------------------------------------------------------------
 
-rpc(Pid, Request, Args) ->
+rpc(Pid, Request, Params) ->
 	Header=make_header(Request),
-	Fargs=format_args(Args),
-	R=concat([Header, Request, "5", Fargs, "4f\x04"]),
-	cmd(Pid, {R}).
+	cmd(Pid, [Header, Request, "5", format_params(Params), "\x04"]).
 
 %%--------------------------------------------------------------------
-%% @doc Format the RPC Args.
+%% @doc Entry point for parameter formatting.
 %% @end
 %%--------------------------------------------------------------------
 
-format_args(Args) ->
-	format_args(Args, []).
+format_params(Params) ->
+	case get_param_type(Params) of
+	{literal} ->
+		format_literal(Params, []);
+	{kvlist} ->
+		format_kvlist(Params);
+	_ ->
+		{error, invalid_parameters}
+	end.
 
-format_args([H|T], L) ->
-	A=string:len(H),
-	B=string:right(integer_to_list(A), 4, $0),
-	C=concat([B, H, "f"]),
-	D=L ++ C,
-	format_args(T, D);
+%%--------------------------------------------------------------------
+%% @doc Format literal parameters.
+%% @end
+%%--------------------------------------------------------------------
 
-format_args([], L) ->
+format_literal([H|T], L) ->
+	B=string:right(integer_to_list(string:len(H)), 3, $0),
+	D=L ++ concat(["0", B, H, "f"]),
+	format_literal(T, D);
+
+format_literal([], L) ->
 	L.
 
 %%--------------------------------------------------------------------
-%% @doc Construct the RPC Header.
+%% @doc Format key/value parameter lists.
+%% @end
+%%--------------------------------------------------------------------
+
+format_kvlist(Params) ->
+	format_kvlist(Params, []).
+
+format_kvlist([{K,V}|T], L) ->
+	Key=string:right(integer_to_list(string:len(K)), 3, $0) ++ K,
+	Value=string:right(integer_to_list(string:len(V)-1), 3, $0) ++ V,
+	case T of
+	[] ->
+		Pair2 = concat([Key,Value]);
+	_ ->
+		Pair2 = concat([Key,Value,"t"])  
+	end,
+	format_kvlist(T, L ++ Pair2);
+
+format_kvlist([], L) ->
+	concat(["2", L]).
+
+%%--------------------------------------------------------------------
+%% @doc Construct the header.
 %% @end
 %%--------------------------------------------------------------------
 
 make_header(Request) ->
-	P=[string:len(Request)],
- 	if (Request =:= "TCPConnect") or (Request =:= "#BYE#") ->
- 		concat(["[XWB]10304", P]);
+	NameLen=[string:len(Request)],
+ 	if (Request =:= "TCPConnect") or (Request =:= "#BYE#")->
+ 		concat([?HEADER, "4", NameLen]); 
  	true ->
- 		concat([?HEADER, ?VERSION, P])
+		concat([?HEADER, "2", "\x01", "1", NameLen])
  	end.
+
+%%--------------------------------------------------------------------
+%% @doc Get the parameter type. 
+%% Currently scans for key/val lists and literals. Empty is hard coded 
+%% as required.
+%%
+%% Types: Literal=0, Reference=1, List=2, Global=3, Empty=4
+%% @end
+%%--------------------------------------------------------------------
+
+get_param_type(A) ->
+	B=lists:flatten(A),
+	get_param_type(B, []).
+
+get_param_type([{_J,_K}|T], L) ->
+	case L of 
+	{literal} -> 
+		get_param_type([], {invalid});
+	_ ->
+		get_param_type(T, {kvlist})
+	end;
+
+get_param_type([_H|T], L) ->
+	case L of 
+	{kvlist} -> 
+		get_param_type([], {invalid});
+	_ ->
+		get_param_type(T, {literal})
+	end;
+
+get_param_type([], L) ->
+	L.
 
 %%--------------------------------------------------------------------
 %% @doc Send the RPC call to the listener process.
 %% @end
 %%--------------------------------------------------------------------
 
-cmd(Pid, Request) ->
+cmd(Pid, Request) ->	
     Pid ! {self(), Request},
     receive
 	{Pid, Response} ->
@@ -165,35 +232,48 @@ cmd(Pid, Request) ->
 	    {error, "timeout"}
 	end.  
 
+
+
 %%--------------------------------------------------------------------
 %% @doc Broker listener/interface loop.
 %% @end
 %%--------------------------------------------------------------------
 
-loop(Socket, Parent, B) ->
+loop(Socket, Parent, Acc) ->
     receive
 	{tcp, Socket, Bin} ->
-		Buf=B ++ binary_to_list(Bin),
+		io:format("~n Bin:"),
+		io:format(Bin),
+		Buf = <<Acc/binary, Bin/binary>>,
 		case re:run(Buf, "\x04") of
-		nomatch -> 
-			loop(Socket, Parent, Buf);
-		{match, _} ->
-			B1=Buf -- "\x00,\x00,\x04",
-			Parent ! {self(), {ok, B1}},
-			loop(Socket, Parent, [])
+			nomatch -> 
+				loop(Socket, Parent, Buf);
+			{match, [{_Pos, _}]} ->	
+			case Buf of
+			<<$\x00,$\x00, _/binary>> ->
+				<<$\x00,$\x00, Rest/binary>> = Buf,
+				Pos=size(Rest)-1;
+			_ ->
+				<<_, Rest/binary>> = Buf, 
+				Pos=size(Rest)-2
+			end,
+			<<Value:Pos/binary, _/binary>> = Rest,
+			Parent ! {self(), {ok, binary_to_list(Value)}},
+			loop(Socket, Parent, <<"">>)
 		end;
 	{tcp_error, Socket, Reason} ->
 		Parent ! {self(), {error, socket_error}},
-	    io:format("Socket error:~p ~p~n", [Socket, Reason]);
+	    error_logger:format("Socket error:~p ~p~n", [Socket, Reason]);
 	{tcp_closed, Socket} ->
 		Parent ! {self(), {ok, socket_closed}},
-	    io:format("Socket closed ~n");
-	{Parent, {Request}} -> 
-		gen_tcp:send(Socket, Request),
-	    loop(Socket, Parent, B)
+	    error_logger:info_msg("Socket closed");
+	{Parent, Request} -> 
+		gen_tcp:send(Socket, list_to_binary(Request)),
+		io:format("~n Request:"),
+		io:format(Request),
+	    loop(Socket, Parent, Acc)
     after ?PING_INTERVAL ->
-		rpc(self(), "XWB IM HERE"),
-		rpc(self(), "ORWU DT",["NOW"]),
-	    loop(Socket, Parent, B)
+		self() ! {Parent, "[XWB]11302\x011\x0bXWB IM HERE54f\x04"},
+	    loop(Socket, Parent, Acc)
     end.
 

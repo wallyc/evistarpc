@@ -3,7 +3,7 @@ EVISTARPC
 
 The Erlang Vista RPC driver (a.k.a. evistarpc) provides an interface to the Vista RPC broker. More information on Vista can be found at [worldvista.org] and on OpenVista at [medsphere.org]. Please see the index.html file located the doc directory to learn more and for an example session using the Erlang shell.
 
-This code was built and tested using the Erlang R13B03 release and OpenVista.
+This code was built and tested using the Erlang R14B04 release for 64 bit linux and OpenVista.
 
 Installation
 ------------

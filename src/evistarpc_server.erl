@@ -1,5 +1,5 @@
 %% @author Wally Cash <wally.cash@gmail.com>
-%% @copyright (C) 2010-2011, Wally Cash
+%% @copyright (C) 2010-2012, Wally Cash
 %% @doc Implements a gen_server interface to the evistarpc rpc driver.
 %% @end
 %%
@@ -31,13 +31,10 @@
 host() -> get_env(host, "127.0.0.1").
 port() -> get_env(port, 9201).
 
-
-
 start_link() ->
 	Host=host(),
 	Port=port(),
     gen_server:start({local, ?MODULE}, ?MODULE, [Host, Port], []).
-
 
 %%--------------------------------------------------------------------
 %% @doc Set an application context
@@ -67,6 +64,11 @@ rpc(Request) when is_list(Request) -> gen_server:call(?MODULE, {rpc, Request}).
 
 rpc(Request, Args) when is_list(Request), is_list(Args) -> gen_server:call(?MODULE, {rpc, Request, Args}).
 
+%%--------------------------------------------------------------------
+%% @doc Call an RPC with arguments
+%% @end
+%%--------------------------------------------------------------------
+
 init([Host, Port]) ->
 	case evistarpc_conn:start(Host, Port) of
 	{ok,Pid} -> 
@@ -75,8 +77,8 @@ init([Host, Port]) ->
 		process_flag(trap_exit, true),
 		{ok,#state{driver_pid = Pid, host=Host, port=Port}};
 	{error} ->
-		error_logger:format("~p: Initialization error.~n", [?MODULE]), 
-		{error, initialization_failure}
+		error_logger:format("~p: Failed to connect to broker. Does the database need to be rundown?~n", [?MODULE]), 
+		{error, connection_failure}
 	end.
 
 handle_call({context, Context}, _From, State) ->
@@ -89,7 +91,7 @@ handle_call({login, Access, Verify}, _From, State) ->
 	socket_closed ->
 		error_logger:format("~s: No connection, login failed.~n", [?MODULE]),
 		C="0",
-		D="Login Failed",
+		D="Login failed.",
 		{error, socket_closed};
 	_ ->
 		B=string:tokens(A, "\r"),
@@ -112,6 +114,7 @@ handle_call({rpc, Request}, _From, State) ->
 	Y=evistarpc_conn:rpc(State#state.driver_pid, Request),
    	{reply, Y, State};
 
+
 handle_call({rpc, Request, Args}, _From, State) ->
 	Y=evistarpc_conn:rpc(State#state.driver_pid, Request, Args),
    	{reply, Y, State}.
@@ -124,7 +127,7 @@ handle_info(_Info, State) ->
 
 terminate(_Reason, State) ->
 	evistarpc_conn:disconnect(State#state.driver_pid),
-	error_logger:info_msg("~p: stopping~n", [?MODULE]),
+	error_logger:info_msg("~p: Closing broker connection.~n", [?MODULE]),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->

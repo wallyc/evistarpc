@@ -1,5 +1,5 @@
 %% @author Wally Cash <wally.cash@gmail.com>
-%% @copyright (C) 2010-2011, Wally Cash
+%% @copyright (C) 2010-2012, Wally Cash
 %% @doc A collection of utilities to manipulate VistA data structures. 
 %% @end
 %%
@@ -33,12 +33,13 @@ to_record(Rec, Str) ->
 	[Rec#listdata{key=piece(Y, 2),value=piece(Y, 1)} || Y <- L].
 
 %%--------------------------------------------------------------------
-%% @doc Parses a '\r\n' delimited string to JSON using teh default 
+%% @doc Parses a '\r\n' delimited string to JSON using the default 
 %% conversion. The array id will be set to "data" and elements will 
 %% be parsed as 'key'-'value' pairs, with key parsed from the second
 %% position and value from the first.
 %% @end
 %%--------------------------------------------------------------------
+
 to_json(Str) ->
 	to_json(Str, {[], []}).
 
@@ -49,6 +50,7 @@ to_json(Str) ->
 %% is a list of tuples specifying the element identifier and position. 
 %% @end
 %%--------------------------------------------------------------------
+
 to_json(Str, {Id, Args}) ->
 	case Args of 
 	[] ->
@@ -123,6 +125,7 @@ to_fm_datetime(DateTime) ->
 %% @doc Converts an Erlang date tuple to fileman format.
 %% @end
 %%--------------------------------------------------------------------
+
 to_fm_date(Date) ->
     {Year,Month,Day}=Date,
 	Year2=Year-1700,
@@ -133,6 +136,7 @@ to_fm_date(Date) ->
 %% @doc Converts a fileman datetime string to a datetime tuple.
 %% @end
 %%--------------------------------------------------------------------
+
 from_fm_datetime(DateTime) ->
 	{Yr,_}=string:to_integer(string:sub_string(DateTime,1,3)),
 	Year=Yr+1700,
@@ -142,4 +146,5 @@ from_fm_datetime(DateTime) ->
 	Min=string:sub_string(DateTime,11,12),
 	Sec=string:sub_string(DateTime,13,14),
 	{{Year,Mo,Da},{Hr,Min,Sec}}.
+
 

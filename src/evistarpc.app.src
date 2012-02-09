@@ -1,6 +1,6 @@
 {application,evistarpc,
              [{description,"Vista RPC Driver"},
-              {vsn,"0.1.0"},
+              {vsn,"0.2.0"},
               {modules,[evistarpc_app,evistarpc_cipher,evistarpc_conn,
                         evistarpc_deps,evistarpc_server,evistarpc_sup,
                         evistarpc_util]},

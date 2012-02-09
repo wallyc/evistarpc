@@ -1,0 +1,13 @@
+Welcome to evistarpc!
+
+Release 0.2.0
+-----------------------------
+
+* Now supports both literal and key/value list argument types.
+
+* Strings are now manipulated as binaries via the bit syntax 
+  in the listener loop to improve efficiency. 
+
+* Numerous minor fixes and improvements. 
+
+

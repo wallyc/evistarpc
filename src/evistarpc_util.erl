@@ -18,9 +18,15 @@
 
 
 -module(evistarpc_util).  
+
 -export([piece/2, piece/3, to_fm_date/1, to_fm_datetime/1, from_fm_datetime/1, to_record/2, to_json/1, to_json/2]).
+-export([format_ovid_params/1]).
 
 -include("evistarpc.hrl").
+
+-import(lists, [concat/1, nth/2, flatten/1]).
+
+-define(Char64, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/").
 
 %%--------------------------------------------------------------------
 %% @doc Parses a \r\n delimited string to a key value record. Intended 
@@ -146,5 +152,73 @@ from_fm_datetime(DateTime) ->
 	Min=string:sub_string(DateTime,11,12),
 	Sec=string:sub_string(DateTime,13,14),
 	{{Year,Mo,Da},{Hr,Min,Sec}}.
+
+%%--------------------------------------------------------------------
+%% @doc Format parameters for use with OVID.
+%% Returns a list of key,value tuples of the form {index, parameters}.
+%% @end
+%%--------------------------------------------------------------------
+
+format_ovid_params(A) ->
+	format_ovid_params(A, 1, []).
+
+format_ovid_params([H|T], I, L) ->
+	format_ovid_params(T, I + 1, [L|[{integer_to_list(I), format_ovid(H)}]]);
+
+format_ovid_params([],_I, L) ->
+	flatten(L).
+
+%%--------------------------------------------------------------------
+%% @doc Process the parameters.
+%% @end
+%%--------------------------------------------------------------------
+
+format_ovid(Params) -> 
+	format_ovid(Params, []).
+
+format_ovid([{K,V}|T], L) ->
+	case V of
+	[] ->
+		Pair = concat([encode(string:len(K)),K]);
+	_ ->
+		Pair = concat([encode(string:len(K)),K,encode(string:len(V),2),V])
+	end,
+	format_ovid(T, L ++ Pair);
+
+format_ovid([{C}|T], L) ->
+	case {C} of
+	{e} ->
+		format_ovid(T, L ++ "A");
+	_ ->
+		Compound=concat([encode(string:len(C)),C,"AA"]),
+		format_ovid(T, L ++ Compound)
+	end;
+
+format_ovid([], L) ->
+	concat([L,"AAf"]).
+
+%%--------------------------------------------------------------------
+%% @doc Encode an integer to Base 64 (1 or 2 digits). One digit is 
+%% the default
+%% @end
+%%--------------------------------------------------------------------
+
+encode(Num) ->
+	encode(Num,1).
+
+encode(Num,N) ->
+	case N of 
+	1 ->
+		[nth(Num + 1,?Char64)];
+	2 ->
+		case Num < 64 of 
+		true ->
+			[nth(Num + 1,?Char64),nth(1,?Char64)];
+		_ ->
+			[nth((Num rem (Num div 64)) + 1,?Char64),nth((Num div 64) + 1,?Char64)]
+		end;
+	_ ->
+		{error, valid_entries_are_1_or_2}	
+	end.
 
 

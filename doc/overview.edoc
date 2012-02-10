@@ -17,7 +17,8 @@ Erlang Vista RPC Driver Overview
 The 'evistarpc' application provides an Erlang interface to the <a href="http://worldvista.org" 
 target="_new">Vista</a> RPC broker. Facilities are provided to connect to a Vista RPC broker, 
 authenticate, call a remote procedure, and conversion of the results into JSON or 
-key/value records.  
+key/value records. Initial support for OVID (OpenVista Interface Domain) interaction via the RPC 
+broker is also provided.
 
 == Example Session ==
 
@@ -44,7 +45,7 @@ Let's get the welcome message from the Vista Server:
 
 ```2> evistarpc_server:rpc("XUS INTRO MSG").
    {ok,"OpenVista Server is an open source project.  Project information 
-    and source code available at http://www.medsphere.org\r\n"}'''
+    and source code available at http://www.medsphere.org"}'''
 	
 We should authenticate. Don't forget to change the access and verify codes to your values.
 
@@ -59,7 +60,7 @@ Next we'll need to set an application context:
 Now we'll execute a rpc call without arguments:
 
 ```5> {_,W}=evistarpc_server:rpc("ORQPT WARDS").
-   {ok,"1^ICU\r\n2^MED/SURG\r\n3^PSYCH\r\n"}'''
+   {ok,"1^ICU\r\n2^MED/SURG\r\n3^PSYCH"}'''
 	
 Let's convert the result held in the variable W to JSON and pass it as an argument to io:format() 
 to get human friendly output in the shell. Accepting the default behaviour for the conversion
@@ -75,7 +76,7 @@ To illustrate a call with arguments we'll get a list of patients. Literal argume
    {ok,"3^PATIENTCLINICAL F^^^^PATIENTCLINICAL F\r\n4^PATIENT,CLINICAL M^^^^PATIENT,CLINICAL M\r
    \n2^PATIENT,DIETARY^^^^PATIENT,DIETARY\r\n6^PATIENT,LABORATORY^^^^PATIENT,LABORATORY\r
    \n8^PATIENT,PEDIATRIC^^^^PATIENT,PEDIATRIC\r\n7^PATIENT,PHARMACY^^^^PATIENT,PHARMACY\r
-   \n5^PATIENT,RADIOLOGY^^^^PATIENT,RADIOLOGY\r\n1^ZZTEST,ONE^^^^ZZTEST,ONE\r\n"}'''
+   \n5^PATIENT,RADIOLOGY^^^^PATIENT,RADIOLOGY\r\n1^ZZTEST,ONE^^^^ZZTEST,ONE"}'''
 	
 Now let's convert the result to json - this time specifying the arguments. Arguments are passed as a tuple. 
 The first element of the tuple is a string identifying the array and the second is a list of tuples of the 
@@ -86,6 +87,31 @@ form {identifier,position}. For example:
    {"id":"2","name":"PATIENT,DIETARY"},{"id":"6","name":"PATIENT,LABORATORY"},{"id":"8","name":"PATIENT,PEDIATRIC"},
    {"id":"7","name":"PATIENT,PHARMACY"},{"id":"5","name":"PATIENT,RADIOLOGY"},{"id":"1","name":"ZZTEST,ONE"}]}ok'''
 
+To make an OVID call we have to login as the OVID user:
+
+```9> evistarpc_server:login("OV1234","OV1234!!").
+   Good evening USER,OVID
+     You last signed on today at 21:39
+   {ok,{"143","\nGood evening USER,OVID\n     You last signed on today at 21:39"}}'''
+
+Set the OVID context:
+
+```10> evistarpc_server:context("MSCV FM RESOURCE USER").
+   {ok,"1"}'''
+
+Encode the parameters (Note: {e} marks the end of a child node):
+
+```11> A=evistarpc_util:encode_ovid_params([[{"FILEMAN"},{"LIST"},{"FILE","2"},{"PACK","1"},{"FIELD"},{"NAME",".01"},{e},
+   {"FIELD"},  {"NAME",".104"},{"INTERNAL","1"},{e},{"FIELD"},{"NAME","21400.99"},{e}]]).
+   [{"1","HFILEMANAAELISTAAEFILEBA2EPACKBA1FFIELDAAENAMEDA.01AFFIELDAAENAMEEA.104IINTERNALBA1AFFIELDAAENAMEIA21400.99AAAf"}]'''
+
+And Make the call:
+
+```12> evistarpc_server:rpc("MSCVBFM ENTRY",A).
+   {ok,"HFILEMANAAHRESULTSAADMAPAABMDAIENBMDA.01BMEA.104BMIA21400.99ACRDkA3^PATIENT,CLINICAL F^42^TST900000101CRDkA4^PATIENT,
+   CLINICAL M^42^TST900000102CRDhA2^PATIENT,DIETARY^42^TST900000100CRDkA6^PATIENT,LABO\rnATORY^42^TST900000104CRDjA8^PATIENT,
+   PEDIATRIC^42^TST900000106CRDiA7^PATIENT,PHARMACY^42^TST900000105CRDjA5^PATIENT,RADIOLOGY^42^TST900000103CRDYA1^ZZTEST,
+   ONE^^3773773773AA"}'''
 
 
 

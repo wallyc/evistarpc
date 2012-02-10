@@ -63,7 +63,7 @@ init(Parent, Host, Port) ->
 	case gen_tcp:connect(Host, Port, [binary, {packet, 0}]) of
 	{ok, Socket} -> 
 		Parent ! {self(), ok},
-		loop(Socket, Parent, <<"">>);
+		loop(Socket, Parent, []);
 	{error, _} ->
 	    Parent ! {self(), error}
 	end.
@@ -231,8 +231,31 @@ cmd(Pid, Request) ->
     after ?RESPONSE_TIMEOUT ->
 	    {error, "timeout"}
 	end.  
+	
+%%--------------------------------------------------------------------
+%% @doc Strip the trailing \r \n 's.
+%% @end
+%%--------------------------------------------------------------------
 
+strip_crlf(String) ->
+    lists:reverse(drop_spaces(lists:reverse(String))).
 
+drop_spaces([]) ->
+    [];
+drop_spaces(YS=[X|XS]) ->
+    case is_space(X) of
+        true ->
+            drop_spaces(XS);
+        false ->
+            YS
+    end.
+
+is_space($\r) ->
+    true;
+is_space($\n) ->
+    true;
+is_space(_) ->
+    false.
 
 %%--------------------------------------------------------------------
 %% @doc Broker listener/interface loop.
@@ -244,22 +267,32 @@ loop(Socket, Parent, Acc) ->
 	{tcp, Socket, Bin} ->
 		io:format("~n Bin:"),
 		io:format(Bin),
-		Buf = <<Acc/binary, Bin/binary>>,
-		case re:run(Buf, "\x04") of
-			nomatch -> 
-				loop(Socket, Parent, Buf);
-			{match, [{_Pos, _}]} ->	
-			case Buf of
+		io:format("~n"),
+		case Acc of 
+		[] -> 
+			case Bin of
 			<<$\x00,$\x00, _/binary>> ->
-				<<$\x00,$\x00, Rest/binary>> = Buf,
+				<<$\x00,$\x00, Rest/binary>> = Bin,
 				Pos=size(Rest)-1;
 			_ ->
-				<<_, Rest/binary>> = Buf, 
+				<<_, Rest/binary>> = Bin, 
 				Pos=size(Rest)-2
-			end,
-			<<Value:Pos/binary, _/binary>> = Rest,
-			Parent ! {self(), {ok, binary_to_list(Value)}},
-			loop(Socket, Parent, <<"">>)
+			end;
+		_ ->
+			Rest = Bin, 
+			Pos=size(Rest)
+		end,
+		<<Value:Pos/binary, _/binary>> = Rest,
+		case re:run(Bin, "\x04") of
+		nomatch -> 
+			B=strip_crlf(binary_to_list(Value)),
+			loop(Socket, Parent, Acc ++ B);
+		{match, [{_, _}]} ->
+			Pos2=size(Value)-1,	
+			<<Value2:Pos2/binary, _/binary>> = Value,
+			B=Acc ++ strip_crlf(binary_to_list(Value2)),
+			Parent ! {self(), {ok, B}},
+			loop(Socket, Parent, [])
 		end;
 	{tcp_error, Socket, Reason} ->
 		Parent ! {self(), {error, socket_error}},

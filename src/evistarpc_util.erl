@@ -20,7 +20,7 @@
 -module(evistarpc_util).  
 
 -export([piece/2, piece/3, to_fm_date/1, to_fm_datetime/1, from_fm_datetime/1, to_record/2, to_json/1, to_json/2]).
--export([format_ovid_params/1]).
+-export([encode_ovid_params/1]).
 
 -include("evistarpc.hrl").
 
@@ -70,7 +70,7 @@ to_json(Str, {Id, Args}) ->
 	end,
 	L=string:tokens(Str, "\r\n"),
 	J={struct, [{T,{array, [{struct,apply_args(A, Y)} || Y <- L]}}]},
-	mochijson:encode(J).
+	mochijson:int_to_B64(J).
 
 apply_args(A, Y) ->
     apply_args1(A, Y, []).
@@ -154,59 +154,59 @@ from_fm_datetime(DateTime) ->
 	{{Year,Mo,Da},{Hr,Min,Sec}}.
 
 %%--------------------------------------------------------------------
-%% @doc Format parameters for use with OVID.
-%% Returns a list of key,value tuples of the form {index, parameters}.
+%% @doc Encode parameters for use with OVID.
+%% Returns a list of key,value tuples of the form [{index, parameters}, ...].
 %% @end
 %%--------------------------------------------------------------------
 
-format_ovid_params(A) ->
-	format_ovid_params(A, 1, []).
+encode_ovid_params(A) ->
+	encode_ovid_params(A, 1, []).
 
-format_ovid_params([H|T], I, L) ->
-	format_ovid_params(T, I + 1, [L|[{integer_to_list(I), format_ovid(H)}]]);
+encode_ovid_params([H|T], I, L) ->
+	encode_ovid_params(T, I + 1, [L|[{integer_to_list(I), encode_ovid(H)}]]);
 
-format_ovid_params([],_I, L) ->
+encode_ovid_params([],_I, L) ->
 	flatten(L).
 
 %%--------------------------------------------------------------------
-%% @doc Process the parameters.
+%% @doc Process OVID parameters.
 %% @end
 %%--------------------------------------------------------------------
 
-format_ovid(Params) -> 
-	format_ovid(Params, []).
+encode_ovid(Params) -> 
+	encode_ovid(Params, []).
 
-format_ovid([{K,V}|T], L) ->
+encode_ovid([{K,V}|T], L) ->
 	case V of
 	[] ->
-		Pair = concat([encode(string:len(K)),K]);
+		Pair = concat([int_to_B64(string:len(K)),K]);
 	_ ->
-		Pair = concat([encode(string:len(K)),K,encode(string:len(V),2),V])
+		Pair = concat([int_to_B64(string:len(K)),K,int_to_B64(string:len(V),2),V])
 	end,
-	format_ovid(T, L ++ Pair);
+	encode_ovid(T, L ++ Pair);
 
-format_ovid([{C}|T], L) ->
+encode_ovid([{C}|T], L) ->
 	case {C} of
 	{e} ->
-		format_ovid(T, L ++ "A");
+		encode_ovid(T, L ++ "A");
 	_ ->
-		Compound=concat([encode(string:len(C)),C,"AA"]),
-		format_ovid(T, L ++ Compound)
+		Compound=concat([int_to_B64(string:len(C)),C,"AA"]),
+		encode_ovid(T, L ++ Compound)
 	end;
 
-format_ovid([], L) ->
+encode_ovid([], L) ->
 	concat([L,"AAf"]).
 
 %%--------------------------------------------------------------------
 %% @doc Encode an integer to Base 64 (1 or 2 digits). One digit is 
-%% the default
+%% the default - little endian.
 %% @end
 %%--------------------------------------------------------------------
 
-encode(Num) ->
-	encode(Num,1).
+int_to_B64(Num) ->
+	int_to_B64(Num,1).
 
-encode(Num,N) ->
+int_to_B64(Num,N) ->
 	case N of 
 	1 ->
 		[nth(Num + 1,?Char64)];
@@ -215,7 +215,7 @@ encode(Num,N) ->
 		true ->
 			[nth(Num + 1,?Char64),nth(1,?Char64)];
 		_ ->
-			[nth((Num rem (Num div 64)) + 1,?Char64),nth((Num div 64) + 1,?Char64)]
+			[nth((Num rem (Num div 64)) + 1, ?Char64),nth((Num div 64) + 1, ?Char64)]
 		end;
 	_ ->
 		{error, valid_entries_are_1_or_2}	

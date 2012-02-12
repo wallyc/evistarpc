@@ -19,8 +19,8 @@
 
 -module(evistarpc_util).  
 
--export([piece/2, piece/3, to_fm_date/1, to_fm_datetime/1, from_fm_datetime/1, to_record/2, to_json/1, to_json/2]).
--export([encode_ovid_params/1]).
+-export([piece/2, piece/3, to_fm_date/1, to_fm_datetime/1, from_fm_datetime/1, to_record/2, to_json/1, to_json/2,
+	int_to_B64/1, int_to_B64/2, encode_ovid_params/1, strip_crlf/1]).
 
 -include("evistarpc.hrl").
 
@@ -213,12 +213,36 @@ int_to_B64(Num,N) ->
 	2 ->
 		case Num < 64 of 
 		true ->
-			[nth(Num + 1,?Char64),nth(1,?Char64)];
+			[nth(Num + 1,?Char64),nth(1,?Char64)]; 
 		_ ->
-			[nth((Num rem (Num div 64)) + 1, ?Char64),nth((Num div 64) + 1, ?Char64)]
+			[nth((Num rem 64) + 1, ?Char64),nth((Num div 64) + 1, ?Char64)]
 		end;
 	_ ->
 		{error, valid_entries_are_1_or_2}	
 	end.
 
+%%--------------------------------------------------------------------
+%% @doc Strip the trailing \r \n 's.
+%% @end
+%%--------------------------------------------------------------------
+
+strip_crlf(String) ->
+    lists:reverse(drop_spaces(lists:reverse(String))).
+
+drop_spaces([]) ->
+    [];
+drop_spaces(S=[H|T]) ->
+	case is_space(H) of
+		true ->
+		    drop_spaces(T);
+		false ->
+		    S
+	end.
+
+is_space($\r) ->
+    true;
+is_space($\n) ->
+    true;
+is_space(_) ->
+    false.
 

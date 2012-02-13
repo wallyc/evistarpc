@@ -3,7 +3,7 @@
 %% @doc A collection of utilities to manipulate VistA data structures. 
 %% @end
 %%
-%% This program is free software: you can redistribute it and/or modify     
+%% This program is free software: you can redistribute it and/or Monthdify     
 %% it under the terms of the GNU Affero General Public License as           
 %% published by the Free Software Foundation, either version 3 of the       
 %% License, or (at your option) any later version.                          
@@ -11,7 +11,7 @@
 %% This program is distributed in the hope that it will be useful,          
 %% but WITHOUT ANY WARRANTY; without even the implied warranty of           
 %% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            
-%% GNU Affero General Public License for more details.                      
+%% GNU Affero General Public License for Monthre details.                      
 %%                                                                         
 %% You should have received a copy of the GNU Affero General Public License 
 %% along with this program.  If not, see http://www.gnu.org/licenses/.
@@ -19,8 +19,8 @@
 
 -module(evistarpc_util).  
 
--export([piece/2, piece/3, to_fm_date/1, to_fm_datetime/1, from_fm_datetime/1, to_record/2, to_json/1, to_json/2,
-	int_to_B64/1, int_to_B64/2, encode_ovid_params/1, strip_crlf/1]).
+-export([piece/2, piece/3, from_fm_date/1, to_fm_date/1, to_fm_datetime/1, from_fm_datetime/1, to_record/2, to_json/1,
+		to_json/2, int_to_B64/1, int_to_B64/2, encode_ovid_params/1, strip_crlf/1]).
 
 -include("evistarpc.hrl").
 
@@ -70,7 +70,7 @@ to_json(Str, {Id, Args}) ->
 	end,
 	L=string:tokens(Str, "\r\n"),
 	J={struct, [{T,{array, [{struct,apply_args(A, Y)} || Y <- L]}}]},
-	mochijson:int_to_B64(J).
+	mochijson:encode(J).
 
 apply_args(A, Y) ->
     apply_args1(A, Y, []).
@@ -117,6 +117,29 @@ piece1([H|T], Pos, J, Sep, Acc) ->
 piece1([], _I, _J, _Sep, Acc)-> lists:reverse(Acc).
 
 %%--------------------------------------------------------------------
+%% @doc Converts a fileman date string to a date tuple.
+%% @end
+%%--------------------------------------------------------------------
+
+from_fm_date(Date) ->
+	{Yr,_}=string:to_integer(string:sub_string(Date,1,3)),
+	Year=Yr+1700,
+	Month=list_to_integer(string:sub_string(Date,4,5)),
+	Day=list_to_integer(string:sub_string(Date,6,7)),
+	{Year,Month,Day}.
+
+%%--------------------------------------------------------------------
+%% @doc Converts an Erlang date tuple to fileman format.
+%% @end
+%%--------------------------------------------------------------------
+
+to_fm_date(Date) ->
+    {{Year,Month,Day}} = Date,
+	Year2=Year-1700,
+    D=io_lib:format("~3.10.0B~2.10.0B~2.10.0B",[Year2, Month, Day]),
+	lists:flatten(D).
+
+%%--------------------------------------------------------------------
 %% @doc Converts an Erlang datetime tuple to fileman format.
 %% @end
 %%--------------------------------------------------------------------
@@ -128,17 +151,6 @@ to_fm_datetime(DateTime) ->
 	lists:flatten(D).
 
 %%--------------------------------------------------------------------
-%% @doc Converts an Erlang date tuple to fileman format.
-%% @end
-%%--------------------------------------------------------------------
-
-to_fm_date(Date) ->
-    {Year,Month,Day}=Date,
-	Year2=Year-1700,
-    D=io_lib:format("~3.10.0B~2.10.0B~2.10.0B",[Year2, Month, Day]),
-	lists:flatten(D).
-
-%%--------------------------------------------------------------------
 %% @doc Converts a fileman datetime string to a datetime tuple.
 %% @end
 %%--------------------------------------------------------------------
@@ -146,12 +158,12 @@ to_fm_date(Date) ->
 from_fm_datetime(DateTime) ->
 	{Yr,_}=string:to_integer(string:sub_string(DateTime,1,3)),
 	Year=Yr+1700,
-	Mo=string:sub_string(DateTime,4,5),
-	Da=string:sub_string(DateTime,6,7),
-	Hr=string:sub_string(DateTime,9,10),
-	Min=string:sub_string(DateTime,11,12),
-	Sec=string:sub_string(DateTime,13,14),
-	{{Year,Mo,Da},{Hr,Min,Sec}}.
+	Month=list_to_integer(string:sub_string(DateTime,4,5)),
+	Day=list_to_integer(string:sub_string(DateTime,6,7)),
+	Hour=list_to_integer(string:sub_string(DateTime,9,10)),
+	Min=list_to_integer(string:sub_string(DateTime,11,12)),
+	Sec=list_to_integer(string:sub_string(DateTime,13,14)),
+	{{Year,Month,Day},{Hour,Min,Sec}}.
 
 %%--------------------------------------------------------------------
 %% @doc Encode parameters for use with OVID.

@@ -74,8 +74,8 @@ init(Parent, Host, Port) ->
 %% @end
 %%--------------------------------------------------------------------
 
-connect(Pid, Str) ->
-	rpc(Pid, "TCPConnect", Str).
+connect(Pid, X) ->
+	rpc(Pid, "TCPConnect", [X]).
 
 %%--------------------------------------------------------------------
 %% @doc Create an application context.
@@ -145,7 +145,7 @@ format_params(Params) ->
 %%--------------------------------------------------------------------
 
 format_literal(P) ->
-	B=string:right(integer_to_list(string:len(P)), 3, $0),
+	B=string:right(integer_to_list(length(lists:flatten(P))), 3, $0),
 	concat(["0", B, P, "f"]).
 
 %%--------------------------------------------------------------------

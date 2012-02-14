@@ -211,7 +211,7 @@ encode_ovid([], L) ->
 
 %%--------------------------------------------------------------------
 %% @doc Encode an integer to Base 64 (1 or 2 digits). One digit is 
-%% the default - little endian.
+%% the default - little endian format for 2 digits.
 %% @end
 %%--------------------------------------------------------------------
 

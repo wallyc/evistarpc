@@ -18,7 +18,7 @@ get_parameter_type_test() ->
     ?assertEqual({invalid}, get_param_type([{"KEY"},"VALUE"])).
 
 format_parameters_test() ->
-	?assertEqual([48,48,48,49,"OPEN VISTA ROCKS",102], format_params(["OPEN VISTA ROCKS"])),
+	?assertEqual([48,48,49,54,"OPEN VISTA ROCKS",102], format_params(["OPEN VISTA ROCKS"])),
 	?assertEqual("2003one002twot005three003four", format_kvlist([{"one","two"},{"three","four"}])),
 	?assertEqual("0010abcde fghif", format_literal("abcde fghi")).
 

@@ -34,7 +34,7 @@
 %%
 %% Header=Broker + Version + Type + Length + Return
 
--import(lists, [concat/1,reverse/1]).
+-import(lists, [concat/1,reverse/1, flatten/1]).
 -import(evistarpc_cipher, [encrypt/1]).
 -import(evistarpc_util, [strip_crlf/1]).
 
@@ -84,7 +84,7 @@ connect(Pid, X) ->
 
 context(Pid, Context) ->
 	X=encrypt(Context),
-	rpc(Pid, "XWB CREATE CONTEXT",[X]).
+	rpc(Pid, "XWB CREATE CONTEXT", [X]).
 
 %%--------------------------------------------------------------------
 %% @doc Disconnect from the RPC broker.
@@ -146,7 +146,7 @@ format_params(Params) ->
 
 format_literal(P) ->
 	B=string:right(integer_to_list(length(lists:flatten(P))), 3, $0),
-	concat(["0", B, P, "f"]).
+	C=concat(["0", B, P, "f"]).
 
 %%--------------------------------------------------------------------
 %% @doc Format key/value parameter lists.
@@ -192,42 +192,33 @@ make_header(Request) ->
 %% @end
 %%--------------------------------------------------------------------
 
-get_param_type([H|T]) ->
-	case T of 
-	[] ->
-		get_param_type([H|T], []);
-	_ ->
-		get_param_type(lists:flatten([H|T]), [])
-	end.
+get_param_type(P) ->
+	get_param_type(P, {null}).
 
-get_param_type([H|T], _L) when is_list(H) ->
-	case T of
-	[] ->
-		get_param_type([], {literal});
+get_param_type([H|T], L) when is_list(H)->
+	case L of
+	{invalid} ->
+		get_param_type([], {invalid});
+	{kvlist} ->
+		get_param_type([], {invalid});
 	_ ->
-		get_param_type([],{invalid})
+		get_param_type(T, {literal})
 	end;
 
 get_param_type([H|T], L) when is_tuple(H) ->
-	io:format("~n Tuple size: "),
-	io:format(integer_to_list(tuple_size(H))),
-	io:format("~n"),
 	case tuple_size(H) of
 	2 ->
 		case L of 
-		{kvlist} -> 
-			get_param_type(T, {kvlist});
-		[] -> 
-			get_param_type(T, {kvlist});
+		{invalid} -> 
+			get_param_type([], {invalid});
+		{literal} -> 
+			get_param_type([], {invalid});
 		_ ->
-			get_param_type([], {invalid})
+			get_param_type(T, {kvlist})
 		end;
 	_ -> 
 		get_param_type([], {invalid})
 	end;
-
-get_param_type([_H|_T], _) ->
-		get_param_type([], {invalid});
 
 get_param_type([], L) ->
 	L.

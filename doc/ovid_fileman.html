@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Module ovid_fileman</title>
+<link rel="stylesheet" type="text/css" href="stylesheet.css" title="EDoc">
+</head>
+<body bgcolor="white">
+<div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<hr>
+
+<h1>Module ovid_fileman</h1>
+<ul class="index"><li><a href="#description">Description</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>A collection of utilities to manipulate VistA data structures.
+<p>Copyright © (C) 2010-2012, Wally Cash</p>
+
+<p><b>Authors:</b> Wally Cash (<a href="mailto:wally.cash@gmail.com"><tt>wally.cash@gmail.com</tt></a>).</p>
+
+<h2><a name="description">Description</a></h2>A collection of utilities to manipulate VistA data structures.
+<h2><a name="index">Function Index</a></h2>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#fm_delete-2">fm_delete/2</a></td><td>Delete a record.</td></tr>
+<tr><td valign="top"><a href="#fm_dictionary-1">fm_dictionary/1</a></td><td>Dictionary.</td></tr>
+<tr><td valign="top"><a href="#fm_find-1">fm_find/1</a></td><td>Find.</td></tr>
+<tr><td valign="top"><a href="#fm_insert-2">fm_insert/2</a></td><td>Insert.</td></tr>
+<tr><td valign="top"><a href="#fm_list-0">fm_list/0</a></td><td>List of Files.</td></tr>
+<tr><td valign="top"><a href="#fm_query_by_iens-3">fm_query_by_iens/3</a></td><td>Query By IENS.</td></tr>
+<tr><td valign="top"><a href="#fm_query_index-1">fm_query_index/1</a></td><td>Query Indexes.</td></tr>
+<tr><td valign="top"><a href="#fm_query_list-2">fm_query_list/2</a></td><td>Query List.</td></tr>
+<tr><td valign="top"><a href="#fm_refby-1">fm_refby/1</a></td><td>Query Ref By.</td></tr>
+<tr><td valign="top"><a href="#fm_retrieve-3">fm_retrieve/3</a></td><td>Retieve a list of fields.</td></tr>
+<tr><td valign="top"><a href="#fm_screen_and-1">fm_screen_and/1</a></td><td>Screen And.</td></tr>
+<tr><td valign="top"><a href="#fm_screen_equals-1">fm_screen_equals/1</a></td><td>Screen Equals.</td></tr>
+<tr><td valign="top"><a href="#fm_screen_field-1">fm_screen_field/1</a></td><td>Screen Field.</td></tr>
+<tr><td valign="top"><a href="#fm_screen_greater_than-1">fm_screen_greater_than/1</a></td><td>Screen Greater Than.</td></tr>
+<tr><td valign="top"><a href="#fm_screen_is_null-1">fm_screen_is_null/1</a></td><td>Screen Is Null.</td></tr>
+<tr><td valign="top"><a href="#fm_screen_or-1">fm_screen_or/1</a></td><td>Screen Or.</td></tr>
+<tr><td valign="top"><a href="#fm_screen_value-1">fm_screen_value/1</a></td><td>Screen Value.</td></tr>
+<tr><td valign="top"><a href="#fm_update-3">fm_update/3</a></td><td>Update a list of fields.</td></tr>
+</table>
+
+<h2><a name="functions">Function Details</a></h2>
+
+<h3 class="function"><a name="fm_delete-2">fm_delete/2</a></h3>
+<div class="spec">
+<p><tt>fm_delete(File, Iens) -&gt; any()</tt></p>
+</div><p>Delete a record.</p>
+
+<h3 class="function"><a name="fm_dictionary-1">fm_dictionary/1</a></h3>
+<div class="spec">
+<p><tt>fm_dictionary(File) -&gt; any()</tt></p>
+</div><p>Dictionary.</p>
+
+<h3 class="function"><a name="fm_find-1">fm_find/1</a></h3>
+<div class="spec">
+<p><tt>fm_find(X1) -&gt; any()</tt></p>
+</div><p>Find.</p>
+
+<h3 class="function"><a name="fm_insert-2">fm_insert/2</a></h3>
+<div class="spec">
+<p><tt>fm_insert(File, Fields) -&gt; any()</tt></p>
+</div><p>Insert</p>
+
+<h3 class="function"><a name="fm_list-0">fm_list/0</a></h3>
+<div class="spec">
+<p><tt>fm_list() -&gt; any()</tt></p>
+</div><p>List of Files</p>
+
+<h3 class="function"><a name="fm_query_by_iens-3">fm_query_by_iens/3</a></h3>
+<div class="spec">
+<p><tt>fm_query_by_iens(File, Iens, Fields) -&gt; any()</tt></p>
+</div><p>Query By IENS.</p>
+
+<h3 class="function"><a name="fm_query_index-1">fm_query_index/1</a></h3>
+<div class="spec">
+<p><tt>fm_query_index(File) -&gt; any()</tt></p>
+</div><p>Query Indexes.</p>
+
+<h3 class="function"><a name="fm_query_list-2">fm_query_list/2</a></h3>
+<div class="spec">
+<p><tt>fm_query_list(File, Fields) -&gt; any()</tt></p>
+</div><p>Query List.</p>
+
+<h3 class="function"><a name="fm_refby-1">fm_refby/1</a></h3>
+<div class="spec">
+<p><tt>fm_refby(File) -&gt; any()</tt></p>
+</div><p>Query Ref By.</p>
+
+<h3 class="function"><a name="fm_retrieve-3">fm_retrieve/3</a></h3>
+<div class="spec">
+<p><tt>fm_retrieve(File, Iens, Fields) -&gt; any()</tt></p>
+</div><p>Retieve a list of fields.</p>
+
+<h3 class="function"><a name="fm_screen_and-1">fm_screen_and/1</a></h3>
+<div class="spec">
+<p><tt>fm_screen_and(X1) -&gt; any()</tt></p>
+</div><p>Screen And.</p>
+
+<h3 class="function"><a name="fm_screen_equals-1">fm_screen_equals/1</a></h3>
+<div class="spec">
+<p><tt>fm_screen_equals(X1) -&gt; any()</tt></p>
+</div><p>Screen Equals.</p>
+
+<h3 class="function"><a name="fm_screen_field-1">fm_screen_field/1</a></h3>
+<div class="spec">
+<p><tt>fm_screen_field(F) -&gt; any()</tt></p>
+</div><p>Screen Field.</p>
+
+<h3 class="function"><a name="fm_screen_greater_than-1">fm_screen_greater_than/1</a></h3>
+<div class="spec">
+<p><tt>fm_screen_greater_than(X1) -&gt; any()</tt></p>
+</div><p>Screen Greater Than.</p>
+
+<h3 class="function"><a name="fm_screen_is_null-1">fm_screen_is_null/1</a></h3>
+<div class="spec">
+<p><tt>fm_screen_is_null(X1) -&gt; any()</tt></p>
+</div><p>Screen Is Null.</p>
+
+<h3 class="function"><a name="fm_screen_or-1">fm_screen_or/1</a></h3>
+<div class="spec">
+<p><tt>fm_screen_or(X1) -&gt; any()</tt></p>
+</div><p>Screen Or.</p>
+
+<h3 class="function"><a name="fm_screen_value-1">fm_screen_value/1</a></h3>
+<div class="spec">
+<p><tt>fm_screen_value(V) -&gt; any()</tt></p>
+</div><p>Screen Value.</p>
+
+<h3 class="function"><a name="fm_update-3">fm_update/3</a></h3>
+<div class="spec">
+<p><tt>fm_update(File, Iens, Fields) -&gt; any()</tt></p>
+</div><p>Update a list of fields.</p>
+<hr>
+
+<div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<p><i>Generated by EDoc, Mar 6 2012, 19:35:23.</i></p>
+</body>
+</html>

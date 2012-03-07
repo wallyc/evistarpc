@@ -1,4 +1,4 @@
 {application,evistarpc}.
 {packages,[]}.
 {modules,[evistarpc_app,evistarpc_cipher,evistarpc_conn,evistarpc_server,
-          evistarpc_sup,evistarpc_util]}.
+          evistarpc_sup,evistarpc_util,fmql,ovid_fileman,ovid_resource]}.

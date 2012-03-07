@@ -65,7 +65,7 @@ rpc(Request) when is_list(Request) -> gen_server:call(?MODULE, {rpc, Request}).
 rpc(Request, Args) when is_list(Request), is_list(Args) -> gen_server:call(?MODULE, {rpc, Request, Args}).
 
 %%--------------------------------------------------------------------
-%% @doc Call an RPC with arguments
+%% @doc Initialize the RPC driver.
 %% @end
 %%--------------------------------------------------------------------
 

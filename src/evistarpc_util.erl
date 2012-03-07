@@ -3,7 +3,7 @@
 %% @doc A collection of utilities to manipulate VistA data structures. 
 %% @end
 %%
-%% This program is free software: you can redistribute it and/or Monthdify     
+%% This program is free software: you can redistribute it and/or Modify     
 %% it under the terms of the GNU Affero General Public License as           
 %% published by the Free Software Foundation, either version 3 of the       
 %% License, or (at your option) any later version.                          
@@ -20,7 +20,7 @@
 -module(evistarpc_util).  
 
 -export([piece/2, piece/3, from_fm_date/1, to_fm_date/1, to_fm_datetime/1, from_fm_datetime/1, to_record/2, to_json/1,
-		to_json/2, int_to_B64/1, int_to_B64/2, encode_ovid_params/1, strip_crlf/1]).
+		to_json/2, strip_crlf/1]).
 
 -include("evistarpc.hrl").
 
@@ -34,7 +34,7 @@
 %% @end
 %%--------------------------------------------------------------------
 
-to_record(Rec, Str) ->	
+to_record(Rec, Str) when is_list(Str) ->	
 	L=string:tokens(Str, "\r\n"),
 	[Rec#listdata{key=piece(Y, 2),value=piece(Y, 1)} || Y <- L].
 
@@ -46,7 +46,7 @@ to_record(Rec, Str) ->
 %% @end
 %%--------------------------------------------------------------------
 
-to_json(Str) ->
+to_json(Str) when is_list(Str) ->
 	to_json(Str, {[], []}).
 
 %%--------------------------------------------------------------------
@@ -57,7 +57,7 @@ to_json(Str) ->
 %% @end
 %%--------------------------------------------------------------------
 
-to_json(Str, {Id, Args}) ->
+to_json(Str, {Id, Args}) when is_list(Str), is_list(Id), is_list(Id) ->
 	case Args of 
 	[] ->
 		A=[{"key",2},{"value",1}];
@@ -89,7 +89,7 @@ apply_args1([], _Y, Acc)->
 %% @end
 %%--------------------------------------------------------------------
 
-piece(Str, Pos) ->
+piece(Str, Pos) when is_list(Str), is_integer(Pos) ->
     piece1(Str,Pos,1,"^",[]).
 
 %%--------------------------------------------------------------------
@@ -98,7 +98,7 @@ piece(Str, Pos) ->
 %% @end
 %%--------------------------------------------------------------------
 
-piece(Str, Pos, Sep) ->
+piece(Str, Pos, Sep) when is_list(Str), is_integer(Pos), is_list(Sep) ->
     piece1(Str, Pos, 1, Sep, []).
 
 piece1([H|T], Pos, J, Sep, Acc) ->
@@ -121,7 +121,7 @@ piece1([], _I, _J, _Sep, Acc)-> lists:reverse(Acc).
 %% @end
 %%--------------------------------------------------------------------
 
-from_fm_date(Date) ->
+from_fm_date(Date) when is_list(Date) ->
 	{Yr,_}=string:to_integer(string:sub_string(Date,1,3)),
 	Year=Yr+1700,
 	Month=list_to_integer(string:sub_string(Date,4,5)),
@@ -133,7 +133,7 @@ from_fm_date(Date) ->
 %% @end
 %%--------------------------------------------------------------------
 
-to_fm_date(Date) ->
+to_fm_date(Date) when is_tuple(Date) ->
     {{Year,Month,Day}} = Date,
 	Year2=Year-1700,
     D=io_lib:format("~3.10.0B~2.10.0B~2.10.0B",[Year2, Month, Day]),
@@ -144,7 +144,7 @@ to_fm_date(Date) ->
 %% @end
 %%--------------------------------------------------------------------
 
-to_fm_datetime(DateTime) ->
+to_fm_datetime(DateTime) when is_tuple(DateTime) ->
     {{Year,Month,Day},{Hour,Min,Sec}} = DateTime,
 	Year2=Year-1700,
     D=io_lib:format("~3.10.0B~2.10.0B~2.10.0B.~2.10.0B~2.10.0B~2.10.0B",[Year2, Month, Day, Hour, Min, Sec]),
@@ -153,7 +153,7 @@ to_fm_datetime(DateTime) ->
 %%--------------------------------------------------------------------
 %% @doc Converts a fileman datetime string to a datetime tuple.
 %% @end
-%%--------------------------------------------------------------------
+%%------------------------------------------------------------------01---
 
 from_fm_datetime(DateTime) ->
 	{Yr,_}=string:to_integer(string:sub_string(DateTime,1,3)),
@@ -164,74 +164,6 @@ from_fm_datetime(DateTime) ->
 	Min=list_to_integer(string:sub_string(DateTime,11,12)),
 	Sec=list_to_integer(string:sub_string(DateTime,13,14)),
 	{{Year,Month,Day},{Hour,Min,Sec}}.
-
-%%--------------------------------------------------------------------
-%% @doc Encode parameters for use with OVID.
-%% Returns a list of key,value tuples of the form [{index, parameters}, ...].
-%% @end
-%%--------------------------------------------------------------------
-
-encode_ovid_params(A) ->
-	encode_ovid_params(A, 1, []).
-
-encode_ovid_params([H|T], I, L) ->
-	encode_ovid_params(T, I + 1, [L|[{integer_to_list(I), encode_ovid(H)}]]);
-
-encode_ovid_params([],_I, L) ->
-	flatten(L).
-
-%%--------------------------------------------------------------------
-%% @doc Process OVID parameters.
-%% @end
-%%--------------------------------------------------------------------
-
-encode_ovid(Params) -> 
-	encode_ovid(Params, []).
-
-encode_ovid([{K,V}|T], L) ->
-	case V of
-	[] ->
-		Pair = concat([int_to_B64(string:len(K)),K]);
-	_ ->
-		Pair = concat([int_to_B64(string:len(K)),K,int_to_B64(string:len(V),2),V])
-	end,
-	encode_ovid(T, L ++ Pair);
-
-encode_ovid([{C}|T], L) ->
-	case {C} of
-	{e} ->
-		encode_ovid(T, L ++ "A");
-	_ ->
-		Compound=concat([int_to_B64(string:len(C)),C,"AA"]),
-		encode_ovid(T, L ++ Compound)
-	end;
-
-encode_ovid([], L) ->
-	concat([L,"AAf"]).
-
-%%--------------------------------------------------------------------
-%% @doc Encode an integer to Base 64 (1 or 2 digits). One digit is 
-%% the default - little endian format for 2 digits.
-%% @end
-%%--------------------------------------------------------------------
-
-int_to_B64(Num) ->
-	int_to_B64(Num,1).
-
-int_to_B64(Num,N) ->
-	case N of 
-	1 ->
-		[nth(Num + 1,?Char64)];
-	2 ->
-		case Num < 64 of 
-		true ->
-			[nth(Num + 1,?Char64),nth(1,?Char64)]; 
-		_ ->
-			[nth((Num rem 64) + 1, ?Char64),nth((Num div 64) + 1, ?Char64)]
-		end;
-	_ ->
-		{error, valid_entries_are_1_or_2}	
-	end.
 
 %%--------------------------------------------------------------------
 %% @doc Strip the trailing \r \n 's.

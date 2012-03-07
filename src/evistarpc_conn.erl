@@ -146,10 +146,10 @@ format_params(Params) ->
 
 format_literal(P) ->
 	B=string:right(integer_to_list(length(lists:flatten(P))), 3, $0),
-	C=concat(["0", B, P, "f"]).
+	concat(["0", B, P, "f"]).
 
 %%--------------------------------------------------------------------
-%% @doc Format key/value parameter lists.
+%% @doc Format array.
 %% @end
 %%--------------------------------------------------------------------
 
@@ -280,13 +280,14 @@ loop(Socket, Parent, Acc) ->
 	{tcp_closed, Socket} ->
 		Parent ! {self(), {ok, socket_closed}},
 	    error_logger:info_msg("Socket closed");
-	{Parent, Request} -> 
+	{Parent, Request} -> 				
 		gen_tcp:send(Socket, list_to_binary(Request)),
 		io:format("~n Request:"),
 		io:format(Request),
 	    loop(Socket, Parent, Acc)
     after ?PING_INTERVAL ->
-		self() ! {Parent, "[XWB]11302\x011\x0bXWB IM HERE54f\x04"},
+		gen_tcp:send(Socket, list_to_binary("[XWB]11302\x011\x0bXWB IM HERE54f\x04")),
 	    loop(Socket, Parent, Acc)
-    end.
+    end.     
 
+   

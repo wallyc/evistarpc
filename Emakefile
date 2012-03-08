@@ -10,7 +10,7 @@
 	debug_info
 ]}.
 
-{ './dep/mochijson/*', [
+{ './dep/mochi/*', [
 	{ i, "./include" },
 	{ outdir, "./ebin" },
 	debug_info

@@ -26,8 +26,6 @@
 
 -import(lists, [concat/1, nth/2, flatten/1]).
 
--define(Char64, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/").
-
 %%--------------------------------------------------------------------
 %% @doc Parses a \r\n delimited string to a key value record. Intended 
 %% to populate Nitrogen combo/list boxes via the record syntax.
@@ -50,14 +48,14 @@ to_json(Str) when is_list(Str) ->
 	to_json(Str, {[], []}).
 
 %%--------------------------------------------------------------------
-%% @doc Parses a '\r\n' delimited string to JSON with arguments specifying
-%% the conversion. Arguments are passed as a tuple. The first 
-%% element of the tuple is a string identifying the array and the second 
-%% is a list of tuples specifying the element identifier and position. 
+%% @doc Parses a '\r\n' delimited string to JSON. Id and args are passed
+%% as a tuple. The first element of the tuple is a string identifying
+%% the array and the second is a list of tuples specifying the element 
+%% identifier and position. 
 %% @end
 %%--------------------------------------------------------------------
 
-to_json(Str, {Id, Args}) when is_list(Str), is_list(Id), is_list(Id) ->
+to_json(Str, {Id, Args}) when is_list(Str), is_list(Id), is_list(Args) ->
 	case Args of 
 	[] ->
 		A=[{"key",2},{"value",1}];

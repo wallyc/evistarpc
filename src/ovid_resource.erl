@@ -20,7 +20,7 @@
 -module(ovid_resource).
   
 -compile(export_all).
--export([encode_ovid_params/1, decode_ovid/1]).
+-export([encode_params/1, decode_ovid/1]).
 
 -import(lists, [concat/1, nth/2, flatten/1]).
 -import(mochinum, [digits/1]).
@@ -34,19 +34,19 @@
 %% @end
 %%--------------------------------------------------------------------
 
-encode_ovid_params(A) when is_list(A) ->
-	encode_ovid_params(A, 1, []).
+encode_params(A) when is_list(A) ->
+	encode_params(A, 1, []).
 
-encode_ovid_params([H|T], I, Acc) ->
+encode_params([H|T], I, Acc) ->
 	case T of 
 	[] -> 
 		E = "f"; 
 	_ -> 
 		E = "" 
 	end,
-	encode_ovid_params(T, I + 1, [Acc|[{integer_to_list(I), encode_ovid(H) ++ E}]]);
+	encode_params(T, I + 1, [Acc|[{integer_to_list(I), encode_ovid(H) ++ E}]]);
 
-encode_ovid_params([], _I, Acc) ->
+encode_params([], _I, Acc) ->
 	flatten(Acc).
 
 %%--------------------------------------------------------------------

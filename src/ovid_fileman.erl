@@ -32,7 +32,7 @@
 %%--------------------------------------------------------------------
 
 fm_update(File, Iens, Fields) when is_number(File), is_integer(Iens), is_list(Fields) ->
-        [{"FILEMAN"}, {"UPDATE"}, {"FILE", File}, {"IENS", Iens ++ ","}] ++ format_fields(Fields) ++ [{e}, {e}].
+        [{"FILEMAN"}, {"UPDATE"}, {"FILE", File}, {"IENS", integer_to_list(Iens) ++ ","}] ++ format_fields(Fields) ++ [{e}, {e}].
 
 %%--------------------------------------------------------------------
 %% @doc Delete a record.
@@ -40,7 +40,7 @@ fm_update(File, Iens, Fields) when is_number(File), is_integer(Iens), is_list(Fi
 %%--------------------------------------------------------------------
 
 fm_delete(File, Iens) when is_number(File), is_integer(Iens) ->
-        [{"FILEMAN"}, {"DELETE"}, {"FILE", File}, {"IENS", Iens ++ ","}, {e}, {e}].
+        [{"FILEMAN"}, {"DELETE"}, {"FILE", File}, {"IENS", integer_to_list(Iens) ++ ","}, {e}, {e}].
 
 %%--------------------------------------------------------------------
 %% @doc Retieve a list of fields.
@@ -48,7 +48,7 @@ fm_delete(File, Iens) when is_number(File), is_integer(Iens) ->
 %%--------------------------------------------------------------------
 
 fm_retrieve(File, Iens, Fields) when is_number(File), is_integer(Iens), is_list(Fields) ->
-	[{"FILEMAN"}, {"GETS"}, {"FILE", File}, {"IENS", Iens ++ ","}] ++ format_fields(Fields).
+	[{"FILEMAN"}, {"GETS"}, {"FILE", File}, {"IENS", integer_to_list(Iens) ++ ","}] ++ format_fields(Fields).
 
 %%--------------------------------------------------------------------
 %% @doc Insert
@@ -81,7 +81,7 @@ fm_query_index(File) when is_number(File) ->
 
 fm_query_list(File, Fields) when is_number(File) or is_list(File), is_list(Fields) ->
         [{"FILEMAN"}, {"LIST"}, {"FILE", File}, {"PACK","1"}] ++ format_fields(Fields).
-%% Doe pack need to be passed in as a parameter? 
+%% Dos pack need to be passed in as a parameter? 
 %% Is there ever an instance that we wouldn't want to pack the results?
 
 %%--------------------------------------------------------------------

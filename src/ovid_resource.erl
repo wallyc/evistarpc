@@ -64,11 +64,12 @@ encode_ovid([{K,V}|T], Acc) ->
 	_ ->
 		case is_number(V) of
 		true ->
+		io:format("V2=digits(V)"),
 			V2=digits(V);
 		false ->
 			V2=V
 		end,
-		Pair = concat([int_to_B64(string:len(K)),K,int_to_B64(string:len(V2),2),V])
+		Pair = concat([int_to_B64(string:len(K)),K,int_to_B64(string:len(V2),2),V2])
 	end,
 	encode_ovid(T, Acc ++ Pair);
 

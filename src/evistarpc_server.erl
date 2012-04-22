@@ -86,29 +86,30 @@ handle_call({context, Context}, _From, State) ->
 	{reply, Y, State};
 
 handle_call({login, Access, Verify}, _From, State) ->
-	{ok,A}=evistarpc_conn:login(State#state.driver_pid, Access, Verify),
+	{ok, A}=evistarpc_conn:login(State#state.driver_pid, Access, Verify),
 	case A of 
 	socket_closed ->
 		error_logger:format("~s: No connection, login failed.~n", [?MODULE]),
-		C="0",
-		D="Login failed.",
+		%%C="0",
+		B="Login failed.",
 		{error, socket_closed};
 	_ ->
-		B=string:tokens(A, "\r"),
-		C =lists:nth(1, B),
-		case C of
-		"0" -> 
-			case lists:nth(3, B) of
-			"0" ->
-				D=string:concat(nth(4, B),string:concat(nth(8,B), nth(9,B)));
-			_ ->
-				D=lists:nth(4, B)
-			end;
-		_ ->
-			D=string:concat(nth(8, B), nth(9, B))
-		end
+		%%[H|_]=A,
+		B=string:tokens(binary_to_list(A), "\r")
+		%%C =lists:nth(1, B),
+		%%case C of
+		%%"0" -> 
+		%%	case lists:nth(3, B) of
+		%%	"0" ->
+		%%		D=string:concat(nth(4, B),string:concat(nth(8,B), nth(9,B)));
+		%%	_ ->
+		%%		D=lists:nth(4, B)
+		%%	end;
+		%%_ ->
+		%%	D=string:concat(nth(8, B), nth(9, B))
+		%%end
 	end,
-   	{reply, {ok,{C,D}}, State};
+   	{reply, {ok,B}, State};
 
 handle_call({rpc, Request}, _From, State) ->
 	Y=evistarpc_conn:rpc(State#state.driver_pid, Request),

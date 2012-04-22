@@ -11,7 +11,7 @@
 %% This program is distributed in the hope that it will be useful,          
 %% but WITHOUT ANY WARRANTY; without even the implied warranty of           
 %% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            
-%% GNU Affero General Public License for Monthre details.                      
+%% GNU Affero General Public License for more details.                      
 %%                                                                         
 %% You should have received a copy of the GNU Affero General Public License 
 %% along with this program.  If not, see http://www.gnu.org/licenses/.
@@ -19,8 +19,8 @@
 
 -module(evistarpc_util).  
 
--export([piece/2, piece/3, from_fm_date/1, to_fm_date/1, to_fm_datetime/1, from_fm_datetime/1, to_record/2, to_json/1,
-		to_json/2, strip_crlf/1]).
+-export([piece/2, piece/3, from_fm_date/1, to_fm_date/1, to_fm_datetime/1, from_fm_datetime/1, to_record/2, process_response/1,
+		strip_crlf/1]).
 
 -include("evistarpc.hrl").
 
@@ -37,49 +37,23 @@ to_record(Rec, Str) when is_list(Str) ->
 	[Rec#listdata{key=piece(Y, 2),value=piece(Y, 1)} || Y <- L].
 
 %%--------------------------------------------------------------------
-%% @doc Parses a '\r\n' delimited string to JSON using the default 
-%% conversion. The array id will be set to "data" and elements will 
-%% be parsed as 'key'-'value' pairs, with key parsed from the second
-%% position and value from the first.
+%% @doc Parses a '\r\n' delimited binary to an erlang stucture which 
+%% can be further processed by mochijson2 to JSON.
 %% @end
 %%--------------------------------------------------------------------
 
-to_json(Str) when is_list(Str) ->
-	to_json(Str, {[], []}).
+process_response(H) -> 
+	process_response(binary:split(H,[<<"\r\n">>],[global, trim]), []).
 
-%%--------------------------------------------------------------------
-%% @doc Parses a '\r\n' delimited string to JSON. Id and args are passed
-%% as a tuple. The first element of the tuple is a string identifying
-%% the array and the second is a list of tuples specifying the element 
-%% identifier and position. 
-%% @end
-%%--------------------------------------------------------------------
+process_response([H|T], Acc) ->
+	process_response(T, Acc ++ get_pair(H));
 
-to_json(Str, {Id, Args}) when is_list(Str), is_list(Id), is_list(Args) ->
-	case Args of 
-	[] ->
-		A=[{"key",2},{"value",1}];
-	_ -> A=Args
-	end,
-	case Id of 
-	[] ->
-		T="data";
-	_ -> T=Id
-	end,
-	L=string:tokens(Str, "\r\n"),
-	J={struct, [{T,{array, [{struct,apply_args(A, Y)} || Y <- L]}}]},
-	mochijson:encode(J).
+process_response([], Acc) ->
+	{struct, Acc}.
 
-apply_args(A, Y) ->
-    apply_args1(A, Y, []).
-
-apply_args1([H|T], Y, Acc) ->
-	{K,V}=H,
-	J={K, piece(Y, V)},
-	apply_args1(T, Y, [J|Acc]);
-
-apply_args1([], _Y, Acc)-> 
-	lists:reverse(Acc).
+get_pair(H) ->
+	[J,K] = binary:split(H, <<"^">>),
+	[{J,K}].
 
 %%--------------------------------------------------------------------
 %% @doc Extracts an element from a '^' delimited list specified
@@ -164,26 +138,31 @@ from_fm_datetime(DateTime) ->
 	{{Year,Month,Day},{Hour,Min,Sec}}.
 
 %%--------------------------------------------------------------------
-%% @doc Strip the trailing \r \n 's.
+%% @doc Strip the trailing \r \n's.
 %% @end
 %%--------------------------------------------------------------------
 
-strip_crlf(String) ->
-    lists:reverse(drop_spaces(lists:reverse(String))).
+strip_crlf(A) ->
+    drop_spaces(A).
 
-drop_spaces([]) ->
-    [];
-drop_spaces(S=[H|T]) ->
-	case is_space(H) of
+drop_spaces(<<>>) ->
+    <<>>;
+drop_spaces(A) ->
+	B=binary:last(A),
+	case is_space(B) of
 		true ->
-		    drop_spaces(T);
+			C=size(A)-1,
+			<<Val:C/binary, _/binary>> =A,
+		    drop_spaces(Val);
 		false ->
-		    S
+		    A
 	end.
 
-is_space($\r) ->
+is_space(13) ->
     true;
-is_space($\n) ->
+is_space(10) ->
+    true;
+is_space(32) ->
     true;
 is_space(_) ->
     false.

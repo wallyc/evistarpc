@@ -11,7 +11,7 @@
 %% This program is distributed in the hope that it will be useful,          
 %% but WITHOUT ANY WARRANTY; without even the implied warranty of           
 %% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            
-%% GNU Affero General Public License for Monthre details.                      
+%% GNU Affero General Public License for more details.                      
 %%                                                                         
 %% You should have received a copy of the GNU Affero General Public License 
 %% along with this program.  If not, see http://www.gnu.org/licenses/.
@@ -20,9 +20,9 @@
 -module(ovid_resource).
   
 -compile(export_all).
--export([encode_params/1, decode_ovid/1]).
+-export([encode/1, to_struct/1]).
 
--import(lists, [concat/1, nth/2, flatten/1]).
+-import(lists, [concat/1, nth/2, flatten/1, reverse/1]).
 -import(mochinum, [digits/1]).
 -import(string, [rstr/2, substr/3]).
 
@@ -34,19 +34,19 @@
 %% @end
 %%--------------------------------------------------------------------
 
-encode_params(A) when is_list(A) ->
-	encode_params(A, 1, []).
+encode(A) ->
+	encode(A, 1, []).
 
-encode_params([H|T], I, Acc) ->
+encode([H|T], I, Acc) ->
 	case T of 
 	[] -> 
 		E = "f"; 
 	_ -> 
 		E = "" 
 	end,
-	encode_params(T, I + 1, [Acc|[{integer_to_list(I), encode_ovid(H) ++ E}]]);
+	encode(T, I + 1, [Acc|[{integer_to_list(I), encode_params(H) ++ E}]]);
 
-encode_params([], _I, Acc) ->
+encode([], _I, Acc) ->
 	flatten(Acc).
 
 %%--------------------------------------------------------------------
@@ -54,84 +54,139 @@ encode_params([], _I, Acc) ->
 %% @end
 %%--------------------------------------------------------------------
 
-encode_ovid(H) -> 
-	encode_ovid(H, []).
+encode_params(H) -> 
+	encode_params(H, []).
 
-encode_ovid([{K,V}|T], Acc) ->
+encode_params([{K,V}|T], Acc) ->
 	case V of
 	[] ->
 		Pair = concat([int_to_B64(string:len(K)),K]);
 	_ ->
 		case is_number(V) of
 		true ->
-		io:format("V2=digits(V)"),
 			V2=digits(V);
 		false ->
 			V2=V
 		end,
 		Pair = concat([int_to_B64(string:len(K)),K,int_to_B64(string:len(V2),2),V2])
 	end,
-	encode_ovid(T, Acc ++ Pair);
+	encode_params(T, Acc ++ Pair);
 
-encode_ovid([{C}|T], Acc) ->
+encode_params([{C}|T], Acc) ->
 	case {C} of
 	{e} ->
-		encode_ovid(T, Acc ++ "A");
+		encode_params(T, Acc ++ "A");
 	_ ->
 		Compound=concat([int_to_B64(string:len(C)),C,"AA"]),
-		encode_ovid(T, Acc ++ Compound)
+		encode_params(T, Acc ++ Compound)
 	end;
 
-encode_ovid([], Acc) ->
+encode_params([], Acc) ->
 	Acc.
 
 %%--------------------------------------------------------------------
-%% @doc Process OVID Results.
+%% @doc Parse OVID results to an Erlang data structure. 
 %% @end
 %%--------------------------------------------------------------------
 
-decode_ovid(A) -> 
-	decode_ovid(A, []).
+to_struct(R) ->
+	reverse(parse_tree(tokenize(R), [])).
 
-decode_ovid(A, Acc) when size(A) > 0 ->
-	<<Val:1/binary, Rest/binary>> = A,
-	Pos = b64_to_int(binary_to_list(Val)),
-	<<Val1:Pos/binary, Rest1/binary>> = Rest,
-	case Rest1 of
-	<<$A,$A, Rest2/binary>> ->
-		Rest3=Rest2,
-		Acc2 = Acc ++ [{binary_to_list(Val1)}];
-	<<$A, Rest2/binary>> ->
-		Rest3=Rest2,
-		Acc2 = Acc ++ [{binary_to_list(Val1)}];
+parse_tree([H|T], Q) ->
+	case H of
+	{child, V} ->
+		{K, R} = process_children(T, []),
+		parse_tree(R, [{V, K}] ++ Q);
+	{compound, V} ->
+		parse_tree(T, [{V}] ++ Q);
+	{close} ->
+		parse_tree(T, Q);
 	_ ->
-		case size(Rest1) of
-		0 ->
-			Acc2=Acc,
-			Rest3 = <<>>,
-			decode_ovid(A, Acc);
+		parse_tree(T, [H] ++ Q)
+	end;
+
+parse_tree([], Q) ->
+	Q.
+
+process_children(R = [H|T], Q) ->
+	case is_end(H) of
+	true ->
+		case H of
+		{close} ->
+			Q2 = reverse(Q),
+			{Q2, T};
 		_ ->
-			{Val2, Rest3}=get_value(Rest1),
-			[H|T]=lists:reverse(Acc), 
-			Acc2= lists:reverse(T) ++ [{H, {binary_to_list(Val1), binary_to_list(Val2)}}]
+			{Q, R}
+		end;
+	_ ->
+		process_children(T, [H|Q])
+	end.
+
+is_end({close}) ->
+    true;
+is_end({child, _}) ->
+    true;
+is_end(_) ->
+    false.
+
+%%--------------------------------------------------------------------
+%% @doc Tokenize an OVID result. 
+%% @end
+%%--------------------------------------------------------------------
+
+tokenize(A) ->  
+	{Val, Rest} = get_token(A, 1),
+	tokenize_ovid(strip_crlf(Rest), [{compound, Val}], 2).
+
+tokenize_ovid(R, Acc, N) when size(R) > 0 ->
+	case R of
+	<<$A,$A, Rest/binary>> ->
+		case is_terminal(Rest) of
+		true ->
+			tokenize_ovid(Rest, [{close}, {close}] ++ Acc, N);
+		false ->
+			{Val, Rest1} = get_token(Rest, 1),
+			tokenize_ovid(Rest1, [{compound, Val}] ++ Acc, 2)
+		end;
+	<<$A, Rest/binary>> ->
+		tokenize_ovid(Rest, [{close}] ++ Acc, 1);
+	_ ->
+		{Val, Rest} = get_token(R, N),
+		case N of 
+		1 -> 
+			tokenize_ovid(Rest, [{child, Val}] ++ Acc, 2);
+		2 -> 
+			[{_, J}|K]=Acc,
+			tokenize_ovid(Rest, [{J, Val}|K], 1) 
 		end
-	end,
-	decode_ovid(Rest3, Acc2);
+	end;
 
- decode_ovid(Rest, Acc) when size(Rest) == 0 ->
-  	Acc.
+tokenize_ovid(R, Acc, _N) when size(R) == 0 ->
+  	reverse(flatten(Acc)).
 
- get_value(V) ->
-	<<Val:2/binary, Rest/binary>> = V,
+is_terminal(<<$A, _/binary>>) ->
+	true;
+is_terminal(<<>>) ->
+	true;
+is_terminal(_) ->
+	false.
+
+get_token(T, N) ->
+	<<Val:N/binary, Rest/binary>> = T,
 	Pos=b64_to_int(binary_to_list(Val)),
 	<<Val1:Pos/binary, Rest1/binary>> = Rest,
-	case Rest1 of 
-    <<$A, Rest2/binary>> ->
-	 	Rest3=Rest2;
-	_ ->
-		Rest3=Rest1
-	end,
-	{Val1, Rest3}.
+	{Val1, Rest1}.
+
+strip_crlf(A) ->
+    recombine(re:split(A, [<<"\r\n">>], [trim]), <<>>).
+
+
+recombine([H|T], Acc) ->
+	recombine(T, <<Acc/binary, H/binary>>);
+
+recombine([], Acc) ->
+	Acc.
+
 
 %%--------------------------------------------------------------------
 %% @doc Convert an integer to Base 64 (1 or 2 digits). One digit is 

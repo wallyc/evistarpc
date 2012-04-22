@@ -64,7 +64,7 @@ init(Parent, Host, Port) ->
 	case gen_tcp:connect(Host, Port, [binary, {packet, 0}]) of
 	{ok, Socket} -> 
 		Parent ! {self(), ok},
-		loop(Socket, Parent, []);
+		loop(Socket, Parent, <<>>);
 	{error, _} ->
 	    Parent ! {self(), error}
 	end.
@@ -249,7 +249,7 @@ loop(Socket, Parent, Acc) ->
 		io:format(Bin),
 		io:format("~n"),
 		case Acc of 
-		[] -> 
+		<<>> -> 
 			case Bin of
 			<<$\x00,$\x00, _/binary>> ->
 				<<$\x00,$\x00, Rest/binary>> = Bin,
@@ -265,14 +265,15 @@ loop(Socket, Parent, Acc) ->
 		<<Value:Pos/binary, _/binary>> = Rest,
 		case re:run(Bin, "\x04") of
 		nomatch -> 
-			B=strip_crlf(binary_to_list(Value)),
-			loop(Socket, Parent, Acc ++ B);
+			B=strip_crlf(Value),
+			loop(Socket, Parent, <<Acc/binary, B/binary>>);
 		{match, [{_, _}]} ->
 			Pos2=size(Value)-1,	
 			<<Value2:Pos2/binary, _/binary>> = Value,
-			B=Acc ++ strip_crlf(binary_to_list(Value2)),
-			Parent ! {self(), {ok, B}},
-			loop(Socket, Parent, [])
+			B=strip_crlf(Value2),
+			C= <<Acc/binary, B/binary>>,
+			Parent ! {self(), {ok, C}},
+			loop(Socket, Parent, <<>>)
 		end;
 	{tcp_error, Socket, Reason} ->
 		Parent ! {self(), {error, socket_error}},

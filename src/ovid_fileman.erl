@@ -11,7 +11,7 @@
 %% This program is distributed in the hope that it will be useful,          
 %% but WITHOUT ANY WARRANTY; without even the implied warranty of           
 %% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            
-%% GNU Affero General Public License for Monthre details.                      
+%% GNU Affero General Public License for more details.                      
 %%                                                                         
 %% You should have received a copy of the GNU Affero General Public License 
 %% along with this program.  If not, see http://www.gnu.org/licenses/.
@@ -80,8 +80,8 @@ fm_query_index(File) when is_number(File) ->
 %%--------------------------------------------------------------------
 
 fm_query_list(File, Fields) when is_number(File) or is_list(File), is_list(Fields) ->
-        [{"FILEMAN"}, {"LIST"}, {"FILE", File}, {"PACK","1"}] ++ format_fields(Fields).
-%% Dos pack need to be passed in as a parameter? 
+        [[{"FILEMAN"}, {"LIST"}, {"FILE", File}, {"PACK","1"}] ++ format_fields(Fields)].
+%% Does pack need to be passed in as a parameter? 
 %% Is there ever an instance that we wouldn't want to pack the results?
 
 %%--------------------------------------------------------------------
@@ -89,15 +89,15 @@ fm_query_list(File, Fields) when is_number(File) or is_list(File), is_list(Field
 %% @end
 %%--------------------------------------------------------------------
 
-fm_query_by_iens(File, Iens, Fields) when is_number(File), is_integer(Iens), is_list(Fields) ->
-        [{"FILEMAN"}, {"QIEN"}, {"FILE", File}] ++ format_iens(Iens) ++ format_fields(Fields).
+fm_query_by_iens(File, Iens, Fields) when is_number(File), is_list(Iens), is_list(Fields) ->
+        [[{"FILEMAN"}, {"QIEN"}, {"FILE", File}] ++ format_iens(Iens) ++ format_fields(Fields)].
 
 %%--------------------------------------------------------------------
 %% @doc Dictionary.
 %% @end
 %%--------------------------------------------------------------------
 
-fm_dictionary(File) when is_number(File) ->
+fm_dictionary(File) when is_number(File) or is_list(File)->
 	[{"FILEMAN"}, {"DIC"}, {"FILE", File}, {e}].
 
 %%--------------------------------------------------------------------

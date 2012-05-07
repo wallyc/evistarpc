@@ -19,7 +19,7 @@
 
 -module(evistarpc_util).  
 
--export([piece/2, piece/3, from_fm_date/1, to_fm_date/1, to_fm_datetime/1, from_fm_datetime/1, to_record/2, process_response/1,
+-export([piece/2, piece/3, from_fm_date/1, to_fm_date/1, to_fm_datetime/1, from_fm_datetime/1, process_kv_list/1,
 		strip_crlf/1]).
 
 -include("evistarpc.hrl").
@@ -27,66 +27,42 @@
 -import(lists, [concat/1, nth/2, flatten/1]).
 
 %%--------------------------------------------------------------------
-%% @doc Parses a \r\n delimited string to a key value record. Intended 
-%% to populate Nitrogen combo/list boxes via the record syntax.
+%% @doc Parses a '\r\n' delimited set of key/value pairs from a binary 
+%% to a list of tuples.
 %% @end
 %%--------------------------------------------------------------------
 
-to_record(Rec, Str) when is_list(Str) ->	
-	L=string:tokens(Str, "\r\n"),
-	[Rec#listdata{key=piece(Y, 2),value=piece(Y, 1)} || Y <- L].
+process_kv_list(Str) -> 
+	process_kv_list(binary:split(Str, [<<"\r\n">>], [global, trim]), []).
 
-%%--------------------------------------------------------------------
-%% @doc Parses a '\r\n' delimited binary to an erlang stucture which 
-%% can be further processed by mochijson2 to JSON.
-%% @end
-%%--------------------------------------------------------------------
+process_kv_list([H|T], Acc) ->
+	process_kv_list(T, Acc ++ get_key_val(H));
 
-process_response(H) -> 
-	process_response(binary:split(H,[<<"\r\n">>],[global, trim]), []).
+process_kv_list([], Acc) ->
+	Acc.
 
-process_response([H|T], Acc) ->
-	process_response(T, Acc ++ get_pair(H));
-
-process_response([], Acc) ->
-	{struct, Acc}.
-
-get_pair(H) ->
+get_key_val(H) ->
 	[J,K] = binary:split(H, <<"^">>),
 	[{J,K}].
 
 %%--------------------------------------------------------------------
-%% @doc Extracts an element from a '^' delimited list specified
+%% @doc Extracts an element from a '^' delimited binary specified
 %% by its position.
 %% @end
 %%--------------------------------------------------------------------
 
-piece(Str, Pos) when is_list(Str), is_integer(Pos) ->
-    piece1(Str,Pos,1,"^",[]).
+piece(Str, Pos) when is_binary(Str), is_integer(Pos) ->
+    piece(Str, Pos, "^").
 
 %%--------------------------------------------------------------------
-%% @doc Extracts an element from a delimited list specified
+%% @doc Extracts an element from a delimited binary specified
 %% by its position and delimiter.
 %% @end
 %%--------------------------------------------------------------------
 
-piece(Str, Pos, Sep) when is_list(Str), is_integer(Pos), is_list(Sep) ->
-    piece1(Str, Pos, 1, Sep, []).
-
-piece1([H|T], Pos, J, Sep, Acc) ->
-    case lists:member(H, Sep) of
-	true -> 
-		case J=:=Pos of
-		true ->		
-			piece1([], Pos, J+1, Sep, Acc);
-		false ->
-			piece1(T, Pos, J+1, Sep, [])
-		end;
-	false -> 
-		piece1(T, Pos, J, Sep, [H|Acc])
-    end;
-
-piece1([], _I, _J, _Sep, Acc)-> lists:reverse(Acc).
+piece(Str, Pos, Sep) when is_binary(Str), is_integer(Pos), is_list(Sep) ->
+    A=binary:split(Str, list_to_binary(Sep), [global]),
+    lists:nth(Pos, A).
 
 %%--------------------------------------------------------------------
 %% @doc Converts a fileman date string to a date tuple.

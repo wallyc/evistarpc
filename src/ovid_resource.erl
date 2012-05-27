@@ -20,7 +20,7 @@
 -module(ovid_resource).
   
 -compile(export_all).
--export([encode/1, to_struct/1]).
+-export([encode/1, decode/1]).
 
 -import(lists, [concat/1, nth/2, flatten/1, reverse/1]).
 -import(mochinum, [digits/1]).
@@ -89,7 +89,7 @@ encode_params([], Acc) ->
 %% @end
 %%--------------------------------------------------------------------
 
-to_struct(R) ->
+decode(R) ->
 	reverse(parse_tree(tokenize(R), [])).
 
 parse_tree([H|T], Q) ->

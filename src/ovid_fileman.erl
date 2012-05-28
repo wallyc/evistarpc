@@ -80,7 +80,7 @@ fm_query_index(File) when is_number(File) ->
 %%--------------------------------------------------------------------
 
 fm_query_list(File, Fields) when is_number(File) or is_list(File), is_list(Fields) ->
-        [[{"FILEMAN"}, {"LIST"}, {"FILE", File}, {"PACK","1"}] ++ format_fields(Fields)].
+        [{"FILEMAN"}, {"LIST"}, {"FILE", File}, {"PACK","1"}] ++ format_fields(Fields).
 %% Does pack need to be passed in as a parameter? 
 %% Is there ever an instance that we wouldn't want to pack the results?
 
@@ -90,7 +90,7 @@ fm_query_list(File, Fields) when is_number(File) or is_list(File), is_list(Field
 %%--------------------------------------------------------------------
 
 fm_query_by_iens(File, Iens, Fields) when is_number(File), is_list(Iens), is_list(Fields) ->
-        [[{"FILEMAN"}, {"QIEN"}, {"FILE", File}] ++ format_iens(Iens) ++ format_fields(Fields)].
+        [{"FILEMAN"}, {"QIEN"}, {"FILE", File}] ++ format_iens(Iens) ++ format_fields(Fields).
 
 %%--------------------------------------------------------------------
 %% @doc Dictionary.

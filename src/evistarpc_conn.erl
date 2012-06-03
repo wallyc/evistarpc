@@ -245,36 +245,42 @@ cmd(Pid, Request) ->
 loop(Socket, Parent, Acc) ->
     receive
 	{tcp, Socket, Bin} ->
-		io:format("~n Bin:"),
-		io:format(Bin),
-		io:format("~n"),
-		case Acc of 
-		<<>> -> 
-			case Bin of
-			<<$\x00,$\x00, _/binary>> ->
-				<<$\x00,$\x00, Rest/binary>> = Bin,
-				Pos=size(Rest)-1;
-			_ ->
-				<<_, Rest/binary>> = Bin, 
-				Pos=size(Rest)-2
-			end;
+		case Bin of
+		<<$\x00,$\x00,$\x04>> ->
+			Parent ! {self(), {ok, null}},
+			loop(Socket, Parent, Acc);
 		_ ->
-			Rest = Bin, 
-			Pos=size(Rest)
-		end,
-		<<Value:Pos/binary, _/binary>> = Rest,
-		case re:run(Bin, "\x04") of
-		nomatch -> 
-			B=strip_crlf(Value),
-			loop(Socket, Parent, <<Acc/binary, B/binary>>);
-		{match, [{_, _}]} ->
-			Pos2=size(Value)-1,	
-			<<Value2:Pos2/binary, _/binary>> = Value,
-			B=strip_crlf(Value2),
-			C= <<Acc/binary, B/binary>>,
-			Parent ! {self(), {ok, C}},
-			loop(Socket, Parent, <<>>)
-		end;
+			io:format("~n Bin:"),
+			io:format(Bin),
+			io:format("~n"),
+			case Acc of 
+			<<>> -> 
+				case Bin of
+				<<$\x00,$\x00, _/binary>> ->
+					<<$\x00,$\x00, Rest/binary>> = Bin,
+					Pos=size(Rest)-1;
+				_ ->
+					<<_, Rest/binary>> = Bin, 
+					Pos=size(Rest)-2
+				end;
+			_ ->
+				Rest = Bin, 
+				Pos=size(Rest)
+			end,
+			<<Value:Pos/binary, _/binary>> = Rest,
+			case re:run(Bin, "\x04") of
+			nomatch -> 
+				B=strip_crlf(Value),
+				loop(Socket, Parent, <<Acc/binary, B/binary>>);
+			{match, [{_, _}]} ->
+				Pos2=size(Value)-1,	
+				<<Value2:Pos2/binary, _/binary>> = Value,
+				B=strip_crlf(Value2),
+				C= <<Acc/binary, B/binary>>,
+				Parent ! {self(), {ok, C}},
+				loop(Socket, Parent, <<>>)
+			end
+	end;
 	{tcp_error, Socket, Reason} ->
 		Parent ! {self(), {error, socket_error}},
 	    error_logger:format("Socket error:~p ~p~n", [Socket, Reason]);
